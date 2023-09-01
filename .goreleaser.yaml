@@ -1,0 +1,32 @@
+builds:
+  - id: "alfreddd"
+    main: ./cmd/alfreddd
+    ldflags:
+      - -s -X 'main.version={{.Version}}' -X 'main.commit={{.Commit}}' -X 'main.date={{.Date}}'
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    binary: alfreddd
+
+## flag the semver v**.**.**-<tag>.* as pre-release on Github
+release:
+  prerelease: auto
+
+checksum:
+  name_template: "checksums.txt"
+
+snapshot:
+  name_template: "{{ .Tag }}-next"
+
+changelog:
+  use: github-native
+
+archives:
+  - id: alfreddd
+    format: binary
+    builds:
+      - alfreddd
+    name_template: "alfreddd-v{{ .Version }}-{{ .Os }}-{{ .Arch }}"
