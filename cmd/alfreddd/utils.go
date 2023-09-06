@@ -34,14 +34,11 @@ func cleanAndExpandPath(path string) string {
 	return filepath.Clean(os.ExpandEnv(path))
 }
 
-func makeDirectoryIfNotExists(path string) (bool, error) {
+func makeDirectoryIfNotExists(path string) error {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		if err := os.MkdirAll(path, os.ModeDir|0755); err != nil {
-			return false, err
-		}
-		return true, nil
+		return os.MkdirAll(path, os.ModeDir|0755)
 	}
-	return false, nil
+	return nil
 }
 
 func formatVersion() string {

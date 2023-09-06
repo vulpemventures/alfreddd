@@ -34,7 +34,7 @@ func makeScaffolding(folder, ghProject, module, app string, noApiSpec bool) erro
 
 	for dir, isEmpty := range dirs {
 		path := filepath.Join(folder, dir)
-		if _, err := makeDirectoryIfNotExists(path); err != nil {
+		if err := makeDirectoryIfNotExists(path); err != nil {
 			return err
 		}
 		if isEmpty {

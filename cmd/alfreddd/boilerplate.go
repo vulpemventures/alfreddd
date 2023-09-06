@@ -23,22 +23,6 @@ func makeBoilerplate(ctx *cli.Context) (err error) {
 	appName := ctx.String(appFlag)
 	noApiSpec := ctx.Bool(apiFlag)
 
-	if len(targetFolder) <= 0 {
-		defaultFolder, _ := filepath.Abs(".")
-		fmt.Printf("What's the folder where I'm going to create the local repository? [Press ENTER to use %s]\n", defaultFolder)
-		fmt.Scanln(&targetFolder)
-
-		if len(targetFolder) <= 0 {
-			targetFolder = defaultFolder
-		}
-	}
-	targetFolder, _ = filepath.Abs(targetFolder)
-
-	targetFolderCreated, err := makeDirectoryIfNotExists(targetFolder)
-	if err != nil {
-		return fmt.Errorf("failed to create folder %s: %s", targetFolder, err)
-	}
-
 	if len(projectName) <= 0 {
 		for {
 			fmt.Println("\nWhat's the name of the GH project? [Please enter a name in the form <gh_profile>/<repo>]")
@@ -53,7 +37,24 @@ func makeBoilerplate(ctx *cli.Context) (err error) {
 		}
 	}
 
-	projectPath := filepath.Join(targetFolder, projectName)
+	if len(targetFolder) <= 0 {
+		defaultFolder, _ := filepath.Abs(".")
+		defaultFolder = filepath.Join(defaultFolder, projectName)
+		fmt.Printf("\nWhat's the folder where I'm going to create the local repository? [Press ENTER to use %s]\n", defaultFolder)
+		fmt.Scanln(&targetFolder)
+		targetFolder = cleanAndExpandPath(strings.Trim(targetFolder, " \n"))
+		if err != nil {
+			return err
+		}
+		if len(targetFolder) <= 0 {
+			targetFolder = defaultFolder
+		}
+	}
+	targetFolder, _ = filepath.Abs(targetFolder)
+
+	if err := makeDirectoryIfNotExists(targetFolder); err != nil {
+		return fmt.Errorf("failed to create folder %s: %s", targetFolder, err)
+	}
 
 	defer func() {
 		if err != nil {
@@ -75,11 +76,7 @@ func makeBoilerplate(ctx *cli.Context) (err error) {
 			}
 
 			if delete {
-				dir := projectPath
-				if targetFolderCreated {
-					dir = targetFolder
-				}
-				os.RemoveAll(dir)
+				os.RemoveAll(targetFolder)
 			}
 		}
 	}()
@@ -122,7 +119,7 @@ func makeBoilerplate(ctx *cli.Context) (err error) {
 	}
 
 	fmt.Println("\nI'm creating the local repository...")
-	if err := makeScaffolding(projectPath, projectName, moduleName, appName, noApiSpec); err != nil {
+	if err := makeScaffolding(targetFolder, projectName, moduleName, appName, noApiSpec); err != nil {
 		return fmt.Errorf("i couldn't create the local repository for the following reason: %s", err)
 	}
 	fmt.Println("Done!")
@@ -131,13 +128,13 @@ func makeBoilerplate(ctx *cli.Context) (err error) {
 	fmt.Scanln()
 
 	fmt.Println("\nAlright! I'm initializing the project...")
-	if err := initProject(projectPath, projectName, moduleName, noApiSpec); err != nil {
+	if err := initProject(targetFolder, projectName, moduleName, noApiSpec); err != nil {
 		return fmt.Errorf("i couldn't initialize the project for the following reason: %s", err)
 	}
 	fmt.Println("\nDone!")
 
 	green.Println("\nYour project has been kick-started")
-	green.Printf("\nLocal repo: %s\n", projectPath)
+	green.Printf("\nLocal repo: %s\n", targetFolder)
 	green.Printf("Remote repo: https://github.com/%s\n", projectName)
 
 	return nil
